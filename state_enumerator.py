@@ -13,6 +13,13 @@ class State:
                  image_size=None,        # Used for any layer that maintains square input (conv and pool), 0 otherwise
                  fc_size=None,           # Used for fc and softmax -- number of neurons in layer
                  terminate=None,
+                 conv_padding=None,
+                 conv_act=None,
+                 conv_bias=None,
+                 pool_padding=None,
+                 pool_act=None,
+                 fc_act=None,
+                 fc_bias=None,
                  state_list=None):       # can be constructed from a list instead, list takes precedent
         if not state_list:
             self.layer_type = layer_type
@@ -23,6 +30,13 @@ class State:
             self.image_size = image_size
             self.fc_size = fc_size
             self.terminate = terminate
+            self.conv_padding=conv_padding
+            self.conv_act=conv_act
+            self.conv_bias=conv_bias
+            self.pool_padding=pool_padding
+            self.pool_act=pool_act
+            self.fc_act=fc_act
+            self.fc_bias=fc_bias
         else:
             self.layer_type = state_list[0]
             self.layer_depth = state_list[1]
@@ -32,6 +46,13 @@ class State:
             self.image_size = state_list[5]
             self.fc_size = state_list[6]
             self.terminate = state_list[7]
+            self.conv_padding=state_list[8]
+            self.conv_act=state_list[9]
+            self.conv_bias=state_list[10]
+            self.pool_padding=state_list[11]
+            self.pool_act=state_list[12]
+            self.fc_act=state_list[13]
+            self.fc_bias=state_list[14]
 
     def as_tuple(self):
         return (self.layer_type, 
@@ -41,7 +62,14 @@ class State:
                 self.stride, 
                 self.image_size,
                 self.fc_size,
-                self.terminate)
+                self.terminate,
+                self.conv_padding,
+                self.conv_act,
+                self.conv_bias,
+                self.pool_padding,
+                self.pool_act,
+                self.fc_act,
+                self.fc_bias)
     def as_list(self):
         return list(self.as_tuple())
     def copy(self):
@@ -52,7 +80,14 @@ class State:
                      self.stride, 
                      self.image_size,
                      self.fc_size,
-                     self.terminate)
+                     self.terminate,
+                     self.conv_padding,
+                     self.conv_act,
+                     self.conv_bias,
+                     self.pool_padding,
+                     self.pool_act,
+                     self.fc_act,
+                     self.fc_bias)
 
 class StateEnumerator:
     '''Class that deals with:
@@ -97,75 +132,128 @@ class StateEnumerator:
                                 stride=state.stride,
                                 image_size=state.image_size,
                                 fc_size=state.fc_size,
-                                terminate=1)]
+                                terminate=1,
+                                conv_padding=0,
+                                conv_act=0,
+                                conv_bias=0,
+                                pool_padding=0,
+                                pool_act=0,
+                                fc_act=0,
+                                fc_bias=0)]
             
             if state.layer_depth < self.layer_limit:
-                
                 # Conv states -- iterate through all possible depths, filter sizes, and strides
                 if (state.layer_type in ['start', 'conv', 'pool']):        
                     for depth in self.ssp.possible_conv_depths:
                         for filt in self._possible_conv_sizes(state.image_size):
-                            actions += [State(layer_type='conv',
-                                                layer_depth=state.layer_depth + 1,
-                                                filter_depth=depth,
-                                                filter_size=filt,
-                                                stride=1,
-                                                image_size=state.image_size if self.ssp.conv_padding == 'SAME' \
-                                                                            else self._calc_new_image_size(state.image_size, filt, 1),
-                                                fc_size=0,
-                                                terminate=0)]
+                            for stride in self._possible_conv_strides(filt):
+                                for conv_padding in self.ssp.possible_conv_padding:
+                                    for conv_act in self.ssp.possible_conv_activate_function:
+                                        for conv_bias in self.ssp.possible_conv_bias:
+                                            actions += [State(layer_type='conv',
+                                                                layer_depth=state.layer_depth + 1,
+                                                                filter_depth=depth,
+                                                                filter_size=filt,
+                                                                stride=stride,
+                                                                image_size=state.image_size if conv_padding == 1 \
+                                                                                            else self._calc_new_image_size(state.image_size, filt, stride),
+                                                                # image_size=state.image_size if self.ssp.conv_padding == 'SAME' \
+                                                                #                             else self._calc_new_image_size(state.image_size, filt, 1),
+                                                                fc_size=0,
+                                                                terminate=0,
+                                                                conv_padding=conv_padding,
+                                                                conv_act=conv_act,
+                                                                conv_bias=conv_bias,
+                                                                pool_padding=0,
+                                                                pool_act=0,
+                                                                fc_act=0,
+                                                                fc_bias=0)]
 
                 # Global Average Pooling States
-                if (state.layer_type in ['start', 'conv', 'pool']):
-                    actions += [State(layer_type='gap',
-                                        layer_depth=state.layer_depth+1,
-                                        filter_depth=0,
-                                        filter_size=0,
-                                        stride=0,
-                                        image_size=1,
-                                        fc_size=0,
-                                        terminate=0)]
+                # if (state.layer_type in ['start', 'conv', 'pool']):
+                #     actions += [State(layer_type='gap',
+                #                         layer_depth=state.layer_depth+1,
+                #                         filter_depth=0,
+                #                         filter_size=0,
+                #                         stride=0,
+                #                         image_size=1,
+                #                         fc_size=0,
+                #                         terminate=0,
+                #                         conv_padding=0,
+                #                         conv_act=0,
+                #                         conv_bias=0,
+                #                         pool_padding=0,
+                #                         pool_act=0,
+                #                         fc_act=0,
+                #                         fc_bias=0)]
 
                 # pool states -- iterate through all possible filter sizes and strides
                 if (state.layer_type in ['conv'] or 
                     (state.layer_type == 'pool' and self.ssp.allow_consecutive_pooling) or
-                    (state.layer_type == 'start' and self.ssp.allow_initial_pooling)): 
+                    (state.layer_type == 'start' and self.ssp.allow_initial_pooling)):
                     for filt in self._possible_pool_sizes(state.image_size):
                         for stride in self._possible_pool_strides(filt):
-                            actions += [State(layer_type='pool',
-                                                layer_depth=state.layer_depth + 1,
-                                                filter_depth=0,
-                                                filter_size=filt,
-                                                stride=stride,
-                                                image_size=self._calc_new_image_size(state.image_size, filt, stride),
-                                                fc_size=0,
-                                                terminate=0)]
+                            for pool_padding in self.ssp.possible_pool_padding:
+                                for pool_act in self.ssp.possible_pool_activate_function:
+                                    actions += [State(layer_type='pool',
+                                                        layer_depth=state.layer_depth + 1,
+                                                        filter_depth=0,
+                                                        filter_size=filt,
+                                                        stride=stride,
+                                                        image_size=self._calc_new_image_size(state.image_size, filt, stride),
+                                                        fc_size=0,
+                                                        terminate=0,
+                                                        conv_padding=0,
+                                                        conv_act=0,
+                                                        conv_bias=0,
+                                                        pool_padding=pool_padding,
+                                                        pool_act=pool_act,
+                                                        fc_act=0,
+                                                        fc_bias=0)]
 
                 # FC States -- iterate through all possible fc sizes
                 if (self.ssp.allow_fully_connected(state.image_size)
                     and state.layer_type in ['start', 'conv', 'pool']):
 
                     for fc_size in self._possible_fc_size(state):
-                        actions += [State(layer_type='fc',
-                                            layer_depth=state.layer_depth + 1,
-                                            filter_depth=0,
-                                            filter_size=0,
-                                            stride=0,
-                                            image_size=0,
-                                            fc_size=fc_size,
-                                            terminate=0)]
+                        for fc_act in self.ssp.possible_fc_activate_function:
+                            for fc_bias in self.ssp.possible_fc_bias:
+                                actions += [State(layer_type='fc',
+                                                    layer_depth=state.layer_depth + 1,
+                                                    filter_depth=0,
+                                                    filter_size=0,
+                                                    stride=0,
+                                                    image_size=0,
+                                                    fc_size=fc_size,
+                                                    terminate=0,
+                                                    conv_padding=0,
+                                                    conv_act=0,
+                                                    conv_bias=0,
+                                                    pool_padding=0,
+                                                    pool_act=0,
+                                                    fc_act=fc_act,
+                                                    fc_bias=fc_bias)]
 
                 # FC -> FC States
                 if state.layer_type == 'fc' and state.filter_depth < self.ssp.max_fc - 1:
                     for fc_size in self._possible_fc_size(state):
-                        actions += [State(layer_type='fc',
-                                            layer_depth=state.layer_depth + 1,
-                                            filter_depth=state.filter_depth + 1,
-                                            filter_size=0,
-                                            stride=0,
-                                            image_size=0,
-                                            fc_size=fc_size,
-                                            terminate=0)]
+                        for fc_act in self.ssp.possible_fc_activate_function:
+                            for fc_bias in self.ssp.possible_fc_bias:
+                                actions += [State(layer_type='fc',
+                                                    layer_depth=state.layer_depth + 1,
+                                                    filter_depth=state.filter_depth + 1,
+                                                    filter_size=0,
+                                                    stride=0,
+                                                    image_size=0,
+                                                    fc_size=fc_size,
+                                                    terminate=0,
+                                                    conv_padding=0,
+                                                    conv_act=0,
+                                                    conv_bias=0,
+                                                    pool_padding=0,
+                                                    pool_act=0,
+                                                    fc_act=fc_act,
+                                                    fc_bias=fc_bias)]
 
         # Add states to transition and q_value dictionary
         q_values[state.as_tuple()] = {'actions': [self.bucket_state_tuple(to_state.as_tuple()) for to_state in actions],
@@ -185,7 +273,8 @@ class StateEnumerator:
             returns: next state, not bucketed
         '''
         if action.layer_type == 'pool' or \
-            (action.layer_type == 'conv' and self.ssp.conv_padding == 'VALID'):
+            (action.layer_type == 'conv' and action.conv_padding == 0):
+            # (action.layer_type == 'conv' and self.ssp.conv_padding == 'VALID'):
             new_image_size = self._calc_new_image_size(start_state.image_size, action.filter_size, action.stride)
         else:
             new_image_size = start_state.image_size
@@ -211,6 +300,9 @@ class StateEnumerator:
 
     def _possible_conv_sizes(self, image_size):
         return [conv for conv in self.ssp.possible_conv_sizes if conv < image_size]
+
+    def _possible_conv_strides(self, filter_size):
+        return [stride for stride in self.ssp.possible_conv_strides if stride <= filter_size]
 
     def _possible_pool_sizes(self, image_size):
         return [pool for pool in self.ssp.possible_pool_sizes if pool < image_size]

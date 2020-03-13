@@ -141,7 +141,7 @@ class Network_Generator:
         self.stringutils = StateStringUtils(state_space_parameters)
 
         # Starting State
-        self.state = se.State('start', 0, 1, 0, 0, state_space_parameters.image_size, 0, 0)# if not state else state
+        self.state = se.State('start', 0, 1, 0, 0, state_space_parameters.image_size, 0, 0, 0, 0, 0, 0, 0, 0, 0)# if not state else state
         self.bucketed_state = self.enum.bucket_state(self.state)
 
         # Cached Q-Values -- used for q learning update and transition
@@ -191,7 +191,7 @@ class Network_Generator:
         self.state_list = []
 
         # Starting State
-        self.state = se.State('start', 0, 1, 0, 0, self.state_space_parameters.image_size, 0, 0)
+        self.state = se.State('start', 0, 1, 0, 0, self.state_space_parameters.image_size, 0, 0, 0, 0, 0, 0, 0, 0, 0)
         self.bucketed_state = self.enum.bucket_state(self.state)
 
     def _run_agent(self):
@@ -208,6 +208,8 @@ class Network_Generator:
             self.enum.enumerate_state(self.bucketed_state, self.qstore.q)
 
         action_values = self.qstore.q[self.bucketed_state.as_tuple()]
+
+        # print action_values
 
         action = se.State(state_list=action_values['actions'][np.random.randint(len(action_values['actions']))])
         # epsilon greedy choice
@@ -299,8 +301,8 @@ def main():
                         ['state_space_parameters', 'hyper_parameters'], 
                         -1)
 
-  network_generator = Network_Generator(_model.state_space_parameters, args.network_number)
   for i in range(args.network_number):
+    network_generator = Network_Generator(_model.state_space_parameters, args.network_number)
     network_generator.generate_net()
         # qstore=qstore,
         # replay_dictionary=self.replay_dictionary)

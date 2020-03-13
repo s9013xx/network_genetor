@@ -4,17 +4,28 @@ image_size = 32                                                                 
 layer_limit = 18                                                                            # Max number of layers
 
 # Transition Options
-possible_conv_depths = [64, 128, 256, 512]                                                  # Choices for number of filters in a convolutional layer
-possible_conv_sizes = [1,3,5]                                                               # Choices for kernel size (square)
-possible_pool_sizes = [[5,3], [3,2], [2,2]]                                                 # Choices for [kernel size, stride] for a max pooling layer
-max_fc = 2                                                                                  # Maximum number of fully connected layers (excluding final FC layer for softmax output)
-possible_fc_sizes = [i for i in [512, 256, 128] if i >= output_states]                      # Possible number of neurons in a fully connected layer
+possible_conv_depths = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]                                                  # Choices for number of filters in a convolutional layer
+possible_conv_sizes = [1, 2, 3, 4, 5, 6, 7]                                                               # Choices for kernel size (square)
+possible_conv_strides = [1, 2, 3, 4]
+possible_conv_padding = [0, 1]    # 0:VALID, 1:SAME
+possible_conv_activate_function = [0, 1]
+possible_conv_bias = [0, 1]
 
-allow_initial_pooling = False                                                               # Allow pooling as the first layer
+possible_pool_sizes = [1, 2, 3, 4, 5, 6, 7]                                                 # Choices for [kernel size, stride] for a max pooling layer
+possible_pool_strides = [1, 2, 3, 4]
+possible_pool_padding = [0, 1]    # 0:VALID, 1:SAME
+possible_pool_activate_function = [0, 1]
+
+max_fc = layer_limit                                                                                  # Maximum number of fully connected layers (excluding final FC layer for softmax output)
+possible_fc_sizes = [i for i in [8192, 4096, 2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1] if i >= output_states]                      # Possible number of neurons in a fully connected layer
+possible_fc_activate_function = [0, 1]
+possible_fc_bias = [0, 1]
+
+allow_initial_pooling = True                                                               # Allow pooling as the first layer
 init_utility = 0.5                                                                          # Set this to around the performance of an average model. It is better to undershoot this
-allow_consecutive_pooling = False                                                           # Allow a pooling layer to follow a pooling layer
+allow_consecutive_pooling = True                                                           # Allow a pooling layer to follow a pooling layer
 
-conv_padding = 'SAME'                                                                       # set to 'SAME' (recommended) to pad convolutions so input and output dimension are the same
+# conv_padding = 'SAME'                                                                       # set to 'SAME' (recommended) to pad convolutions so input and output dimension are the same
                                                                                             # set to 'VALID' to not pad convolutions
 
 batch_norm = False                                                                          # Add batchnorm after convolution before activation
@@ -50,7 +61,7 @@ def image_size_bucket(image_size):
 
 # Condition to allow a transition to fully connected layer based on the current representation size
 def allow_fully_connected(representation_size):
-    return 1
+    # return 1
     return representation_size <= 4
 
 

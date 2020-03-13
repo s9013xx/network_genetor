@@ -63,13 +63,13 @@ class StateStringUtils:
         if state.terminate == 1:
             return 'SM(%i)' % (self.output_number)
         elif state.layer_type == 'conv':
-            return 'C(%i,%i,%i)' % (state.filter_depth, state.filter_size, state.stride)
+            return 'C(%i,%i,%i,%i,%i,%i)' % (state.filter_depth, state.filter_size, state.stride, state.conv_padding, state.conv_act, state.conv_bias)
         elif state.layer_type == 'gap':
             return 'GAP(%i)' % (self.output_number)
         elif state.layer_type == 'pool':
-            return 'P(%i,%i)' % (state.filter_size, state.stride)
+            return 'P(%i,%i,%i,%i)' % (state.filter_size, state.stride, state.pool_padding, state.pool_act)
         elif state.layer_type == 'fc':
-            return 'FC(%i)' % (state.fc_size)
+            return 'FC(%i,%i,%i)' % (state.fc_size, state.fc_act, state.fc_bias)
         elif state.layer_type == 'dropout':
             return 'D(%i,%i)' % (state.filter_depth, state.fc_size) ##SUPER BAD i am using fc_size and filter depth -- should fix later
         return None
