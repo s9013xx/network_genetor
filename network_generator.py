@@ -161,7 +161,7 @@ class Network_Generator:
         # state_list = self.stringutils.add_drop_out_states(state_list)
         net_string = self.stringutils.state_list_to_string(state_list)
 
-        print net_string
+        return net_string
         # Check if we have already trained this model
         # if net_string in self.replay_dictionary['net'].values:
         #     acc_best_val = self.replay_dictionary[self.replay_dictionary['net']==net_string]['accuracy_best_val'].values[0]
@@ -301,12 +301,17 @@ def main():
                         ['state_space_parameters', 'hyper_parameters'], 
                         -1)
 
+  net_list = []
   for i in range(args.network_number):
     network_generator = Network_Generator(_model.state_space_parameters, args.network_number)
-    network_generator.generate_net()
+    net_list.append(network_generator.generate_net())
         # qstore=qstore,
         # replay_dictionary=self.replay_dictionary)
 
+  df_net = pd.DataFrame(net_list, columns=['network'])
+  df_net.to_csv('network.csv',index=False)
+  print df_net
+  # df_net.to_csv
 # this only runs if the module was *not* imported
 if __name__ == '__main__':
     main()  
