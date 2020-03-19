@@ -17,7 +17,6 @@ class State:
                  conv_act=None,
                  conv_bias=None,
                  pool_padding=None,
-                 pool_act=None,
                  fc_act=None,
                  fc_bias=None,
                  state_list=None):       # can be constructed from a list instead, list takes precedent
@@ -34,7 +33,6 @@ class State:
             self.conv_act=conv_act
             self.conv_bias=conv_bias
             self.pool_padding=pool_padding
-            self.pool_act=pool_act
             self.fc_act=fc_act
             self.fc_bias=fc_bias
         else:
@@ -50,9 +48,8 @@ class State:
             self.conv_act=state_list[9]
             self.conv_bias=state_list[10]
             self.pool_padding=state_list[11]
-            self.pool_act=state_list[12]
-            self.fc_act=state_list[13]
-            self.fc_bias=state_list[14]
+            self.fc_act=state_list[12]
+            self.fc_bias=state_list[13]
 
     def as_tuple(self):
         return (self.layer_type, 
@@ -67,7 +64,6 @@ class State:
                 self.conv_act,
                 self.conv_bias,
                 self.pool_padding,
-                self.pool_act,
                 self.fc_act,
                 self.fc_bias)
     def as_list(self):
@@ -85,7 +81,6 @@ class State:
                      self.conv_act,
                      self.conv_bias,
                      self.pool_padding,
-                     self.pool_act,
                      self.fc_act,
                      self.fc_bias)
 
@@ -137,7 +132,6 @@ class StateEnumerator:
                                 conv_act=0,
                                 conv_bias=0,
                                 pool_padding=0,
-                                pool_act=0,
                                 fc_act=0,
                                 fc_bias=0)]
             
@@ -165,7 +159,6 @@ class StateEnumerator:
                                                                 conv_act=conv_act,
                                                                 conv_bias=conv_bias,
                                                                 pool_padding=0,
-                                                                pool_act=0,
                                                                 fc_act=0,
                                                                 fc_bias=0)]
 
@@ -183,7 +176,6 @@ class StateEnumerator:
                 #                         conv_act=0,
                 #                         conv_bias=0,
                 #                         pool_padding=0,
-                #                         pool_act=0,
                 #                         fc_act=0,
                 #                         fc_bias=0)]
 
@@ -194,22 +186,20 @@ class StateEnumerator:
                     for filt in self._possible_pool_sizes(state.image_size):
                         for stride in self._possible_pool_strides(filt):
                             for pool_padding in self.ssp.possible_pool_padding:
-                                for pool_act in self.ssp.possible_pool_activate_function:
-                                    actions += [State(layer_type='pool',
-                                                        layer_depth=state.layer_depth + 1,
-                                                        filter_depth=0,
-                                                        filter_size=filt,
-                                                        stride=stride,
-                                                        image_size=self._calc_new_image_size(state.image_size, filt, stride),
-                                                        fc_size=0,
-                                                        terminate=0,
-                                                        conv_padding=0,
-                                                        conv_act=0,
-                                                        conv_bias=0,
-                                                        pool_padding=pool_padding,
-                                                        pool_act=pool_act,
-                                                        fc_act=0,
-                                                        fc_bias=0)]
+                                actions += [State(layer_type='pool',
+                                                    layer_depth=state.layer_depth + 1,
+                                                    filter_depth=0,
+                                                    filter_size=filt,
+                                                    stride=stride,
+                                                    image_size=self._calc_new_image_size(state.image_size, filt, stride),
+                                                    fc_size=0,
+                                                    terminate=0,
+                                                    conv_padding=0,
+                                                    conv_act=0,
+                                                    conv_bias=0,
+                                                    pool_padding=pool_padding,
+                                                    fc_act=0,
+                                                    fc_bias=0)]
 
                 # FC States -- iterate through all possible fc sizes
                 if (self.ssp.allow_fully_connected(state.image_size)
@@ -230,7 +220,6 @@ class StateEnumerator:
                                                     conv_act=0,
                                                     conv_bias=0,
                                                     pool_padding=0,
-                                                    pool_act=0,
                                                     fc_act=fc_act,
                                                     fc_bias=fc_bias)]
 
@@ -251,7 +240,6 @@ class StateEnumerator:
                                                     conv_act=0,
                                                     conv_bias=0,
                                                     pool_padding=0,
-                                                    pool_act=0,
                                                     fc_act=fc_act,
                                                     fc_bias=fc_bias)]
 

@@ -14,7 +14,6 @@ possible_conv_bias = [0, 1]
 possible_pool_sizes = [1, 2, 3, 4, 5, 6, 7]                                                 # Choices for [kernel size, stride] for a max pooling layer
 possible_pool_strides = [1, 2, 3, 4]
 possible_pool_padding = [0, 1]    # 0:VALID, 1:SAME
-possible_pool_activate_function = [0, 1]
 
 max_fc = layer_limit                                                                                  # Maximum number of fully connected layers (excluding final FC layer for softmax output)
 possible_fc_sizes = [i for i in [8192, 4096, 2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1] if i >= output_states]                      # Possible number of neurons in a fully connected layer

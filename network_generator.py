@@ -303,6 +303,7 @@ def main():
 
   net_list = []
   for i in range(args.network_number):
+    print 'generate : ', i
     network_generator = Network_Generator(_model.state_space_parameters, args.network_number)
     net_list.append(network_generator.generate_net())
         # qstore=qstore,
